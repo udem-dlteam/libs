@@ -208,6 +208,14 @@
 ;;;
 ;;; The SRFI discussion record contains more discussion on this topic.
 
+(##supply-module srfi/1)
+
+(##namespace ("srfi/1#"))
+(##include "~~lib/_prim#.scm")
+(##include "~~lib/_gambit#.scm")
+
+(##include "1#.scm")
+
 (declare
  (block)
  (standard-bindings)
@@ -223,9 +231,8 @@
 ;;; cj TO DO: do type checking & use unsafe compilation
 ;; no: better manually use lowlevel functions. And: type errors
 ;      should be emitted in tail position, unlike the macros that were used here.
-(define-syntax check-arg
-  (syntax-rules ()
-    ((check-arg ignore ...) #f)))
+(##define-macro (check-arg . ignore)
+  #f)
 
 ;;; Constructors
 ;;;;;;;;;;;;;;;;
