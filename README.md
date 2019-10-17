@@ -2,7 +2,8 @@
 
 Repo to develop new libraries for Gambit.
 
-SRFIs should be added to the srfi subdirectory.
+SRFIs should be added to the `srfi` subdirectory. Please open one
+GitHub issue per SRFI to discuss development.
 
 SRFIs already in Gambit's main repo (under `lib/srfi`):
 
