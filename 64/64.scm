@@ -23,6 +23,14 @@
 ;;
 ;; Adapted to Blackhole for Gambit by Álvaro Castro-Castilla
 
+(##supply-module srfi/64)
+
+(##namespace ("srfi/64#"))
+(##include "~~lib/_prim#.scm")
+(##include "~~lib/_gambit#.scm")
+
+(##include "64#.scm")
+
 (define %test-runner-cookie (list "test-runner"))
 (define-syntax %test-record-define
   (syntax-rules ()
