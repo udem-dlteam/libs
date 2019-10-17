@@ -275,7 +275,8 @@
   (display expected-count port)
   (display ". ***" port)
   (newline port)
-  (display "*** Discrepancy indicates testsuite error or exceptions. ***" port)
+  (display "*** Discrepancy indicates testsuite error or exceptions. ***"
+           port)
   (newline port))
 
 (define (test-on-bad-count-simple runner count expected-count)
@@ -429,7 +430,8 @@
                 (let ((pair (car list)))
                   ;; Write out properties not written out by on-test-begin.
                   (if (not (memq (car pair)
-                                 '(test-name source-file source-line source-form)))
+                                 '(test-name source-file
+                                             source-line source-form)))
                       (%test-write-result1 pair log))
                   (loop (cdr list)))))))))
 
@@ -455,9 +457,9 @@
          (p (assq pname alist)))
     (if p
         (test-result-alist! runner
-                                   (let loop ((r alist))
-                                     (if (eq? r p) (cdr r)
-                                         (cons (car r) (loop (cdr r)))))))))
+                            (let loop ((r alist))
+                              (if (eq? r p) (cdr r)
+                                  (cons (car r) (loop (cdr r)))))))))
 
 (define (test-result-kind . rest)
   (let ((runner (if (pair? rest) (car rest) (test-runner-current))))
@@ -489,9 +491,10 @@
     ((%test-evaluate-with-catch test-expression)
      (with-exception-catcher
        (lambda (x) #f)
-       (lambda () test-expression)))))
-     ;(guard (err (else #f)) test-expression)))) ; implemented with exceptions to
-     ; avoid importing srfi-34
+       (lambda () test-expression))
+     ;; (guard (err (else #f)) test-expression)
+     ;; implemented with exceptions to avoid importing srfi-34
+     )))
 
 (define (%test-source-line2 form)
   '())
@@ -588,29 +591,36 @@
 (define-syntax %test-error
   (syntax-rules ()
     ((%test-error r etype expr)
-     (%test-comp1body r (with-exception-catcher (lambda (x) #t)
-                                                (lambda () (begin expr #f)))))))
-     ;(%test-comp1body r (guard (ex (else #t)) expr))))) ; Original implementation
-     ; Implemented with exception-catcher to avoid srfi-34
+     (%test-comp1body r (with-exception-catcher
+                         (lambda (x) #t)
+                         (lambda () (begin expr #f))))
+     ;; (%test-comp1body r (guard (ex (else #t)) expr))
+     ;; Original implementation
+     ;; Implemented with exception-catcher to avoid srfi-34
+     )))
 
 (define-syntax test-error
   (syntax-rules ()
     ((test-error name etype expr)
      (let* ((r (test-runner-get))
             (name tname))
-       ;(test-result-alist! r (cons (cons 'test-name tname) '(TODO:LINE . 0)))
+       ;; (test-result-alist!
+       ;;  r (cons (cons 'test-name tname) '(TODO:LINE . 0)))
        (%test-error r etype expr)))
     ((test-error etype expr)
      (let* ((r (test-runner-get)))
-       ;(test-result-alist! r '(TODO:LINE . 0))
+       ;; (test-result-alist! r '(TODO:LINE . 0))
        (%test-error r etype expr)))
     ((test-error expr)
      (let* ((r (test-runner-get)))
-       ;(test-result-alist! r '(TODO:LINE . 0))
-       (%test-error r #t expr)))))
-      ;(test-assert (%test-error etype expr)))
-      ; In the original version an additional assert was here to ensure it signals
-      ; an error, however, that was executing 2 tests instead of 1
+       ;; (test-result-alist! r '(TODO:LINE . 0))
+       (%test-error r #t expr)
+       ;; (test-assert (%test-error etype expr)))
+       ;;
+       ;; In the original version an additional assert was here to
+       ;; ensure it signals an error, however, that was executing 2
+       ;; tests instead of 1
+       ))))
 
 (define (test-apply first . rest)
   (if (test-runner? first)
@@ -624,7 +634,8 @@
                     (else
                      (%test-runner-run-list!
                       r
-                      (if (eq? run-list #t) (list first) (cons first run-list)))
+                      (if (eq? run-list #t) (list first)
+                          (cons first run-list)))
                      (apply test-apply rest)
                      (%test-runner-run-list! r run-list))))
             (let ((r (test-runner-create)))
@@ -699,17 +710,19 @@
   (syntax-rules ()
     ((test-skip pred ...)
      (let ((runner (test-runner-get)))
-       (%test-runner-skip-list! runner
-                                  (cons (test-match-all (%test-as-specifier pred)  ...)
-                                        (%test-runner-skip-list runner)))))))
+       (%test-runner-skip-list!
+        runner
+        (cons (test-match-all (%test-as-specifier pred)  ...)
+              (%test-runner-skip-list runner)))))))
 
 (define-syntax test-expect-fail
   (syntax-rules ()
     ((test-expect-fail pred ...)
      (let ((runner (test-runner-get)))
-       (%test-runner-fail-list! runner
-                                  (cons (test-match-all (%test-as-specifier pred)  ...)
-                                        (%test-runner-fail-list runner)))))))
+       (%test-runner-fail-list!
+        runner
+        (cons (test-match-all (%test-as-specifier pred)  ...)
+              (%test-runner-fail-list runner)))))))
 
 (define (test-match-name name)
   (lambda (runner)
