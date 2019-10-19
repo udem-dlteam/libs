@@ -1,6 +1,6 @@
 ;; Copyright (c) 2002, 2003 Richard Kelsey, Michael Sperber
 ;; Reference implementation of SRFI-34
-;; 
+;;
 ;; Adapted to Blackhole for Gambit by Álvaro Castro-Castilla
 
 ;; These are just the 2 macro definitions missing in Gambit
@@ -35,7 +35,7 @@
      (begin result1 result2 ...))
     ((guard-aux reraise (test => result))
      (let ((temp test))
-       (if temp 
+       (if temp
            (result temp)
            reraise)))
     ((guard-aux reraise (test => result) clause1 clause2 ...)
