@@ -21,7 +21,7 @@
 ; Syntax:
 ;   LAND* (CLAWS) BODY
 ;
-; where CLAWS is a list of expressions or bindings: 
+; where CLAWS is a list of expressions or bindings:
 ; CLAWS ::= '() | (cons CLAW CLAWS)
 ; Every element of the CLAWS list, a CLAW, must be one of the following:
 ; (VARIABLE EXPRESSION)
@@ -44,7 +44,7 @@
 ; Denotation semantics:
 ;
 ; Eval[ (LAND* (CLAW1 ...) BODY), Env] =
-; EvalClaw[ CLAW1, Env ] andalso 
+; EvalClaw[ CLAW1, Env ] andalso
 ;   Eval[ (LAND* ( ...) BODY), ExtClawEnv[ CLAW1, Env]]
 ;
 ; Eval[ (LAND* (CLAW) ), Env] = EvalClaw[ CLAW, Env ]
@@ -57,7 +57,7 @@
 ;
 ; ExtClawEnv[ BOUND-VARIABLE, Env ] = Env
 ; ExtClawEnv[ (EXPRESSION), Env ] = EnvAfterEval[ EXPRESSION, Env ]
-; ExtClawEnv[ (VARIABLE EXPRESSION), Env ] = 
+; ExtClawEnv[ (VARIABLE EXPRESSION), Env ] =
 ; ExtendEnv[ EnvAfterEval[ EXPRESSION, Env ],
 ;      VARIABLE boundto Eval[ EXPRESSION, Env ]]
 ;
@@ -82,7 +82,7 @@
 ;
 ; Sample applications:
 ;
-; The following piece of code (from my treap package) 
+; The following piece of code (from my treap package)
 ;   (let ((new-root (node:dispatch-on-key root key ...)))
 ;      (if new-root (set! root new-root)))
 ; could be elegantly re-written as
@@ -133,7 +133,7 @@
 ;
 ; $Id: vland-gambit.scm,v 1.1 1998/12/28 23:54:29 srfimgr Exp $
 
-;; 
+;;
 ;; Adapted to Blackhole for Gambit by Álvaro Castro-Castilla
 
 (export and-let*)
@@ -148,7 +148,7 @@
 
     (if (not (list? claws))
       (error "Syntax error: bindings must be a list"))
-    (for-each 
+    (for-each
       (lambda (claw)
         (cond
           ((symbol? claw) ; BOUND-VARIABLE form
