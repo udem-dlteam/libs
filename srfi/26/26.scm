@@ -10,7 +10,7 @@
 ; syntax of the macro using an explicit rest-slot symbol. The
 ; code to evaluate the non-slots for cute has been proposed by
 ; Dale Jordan. The code to allow a slot for the procedure position
-; and to process the macro using an internal macro is based on 
+; and to process the macro using an internal macro is based on
 ; a suggestion by Al Petrofsky. The code found below is, with
 ; exception of this header and some changes in variable names,
 ; entirely written by Al Petrofsky.
@@ -30,7 +30,7 @@
 ;   SE, 05-Jun-2002: replace my code by Al's; substituted "constant" etc.
 ;     to match the convention in the SRFI-document
 
-;; 
+;;
 ;; Adapted to Blackhole for Gambit by Álvaro Castro-Castilla
 
 (export cut cute)
