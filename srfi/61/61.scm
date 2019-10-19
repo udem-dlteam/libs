@@ -1,6 +1,6 @@
 ;; Copyright (c) 2005 Taylor Campbell
 ;; Reference implementation of SRFI-61
-;; 
+;;
 ;; Adapted to Blackhole for Gambit by Álvaro Castro-Castilla
 
 (define-syntax cond
