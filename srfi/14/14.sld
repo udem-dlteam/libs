@@ -35,4 +35,5 @@
    char-set:iso-control char-set:punctuation char-set:symbol
    char-set:hex-digit   char-set:blank       char-set:ascii
    char-set:empty       char-set:full)
+  (import (gambit))
   (include "14.scm"))

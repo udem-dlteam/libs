@@ -64,4 +64,5 @@
    substring-spec-ok?
 
    make-kmp-restart-vector kmp-step string-kmp-partial-search)
+  (import (gambit) (gambit optionals) (srfi 14))
   (include "13.scm"))

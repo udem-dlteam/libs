@@ -1,6 +1,3 @@
-(import |14|
-        ../misc/optionals)
-
 (define (check-arg pred val proc)
   (if (pred val) val (error "Bad arg" val pred proc)))
 
