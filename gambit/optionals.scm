@@ -1,3 +1,5 @@
+;; (let-optionals* (list 1) ((a 0) (b 1) (c 2)) (values a b c)) => 1 1 2
+
 ;; Taken from http://osdir.com/ml/lisp.scheme.scsh/1996-04/msg00010.html
 ;; Written by Olin Shivers
 ;; I removed the let-optionals macro (Per Eckerdal)
@@ -105,7 +107,7 @@
 ;;; - If REST-ARG has >1 element, error.
 
 (define-syntax :optional
-  (syntax-rules ()
+  (syntax-rules (maybe-arg)
     ((:optional rest default-exp)
      (let ((maybe-arg rest))
        (cond ((null? maybe-arg) default-exp)
@@ -135,27 +137,26 @@
 (define-syntax really-let-optionals*
   (syntax-rules ()
     ;; Standard case. Do the first var/default and recurse.
-    ((really-let-optionals* args ((var1 default1 typecheck1 ...) etc ...)
-       body1 ...)
+    ((_ args ((var1 default1 typecheck1 ...) etc ...)
+        body1 ...)
      (call-with-values (lambda () (if (null? args)
                                       (values default1 '())
                                       (values (car args) (cdr args))))
-                       (lambda (var1 rest)
-                         (really-let-optionals* rest (etc ...)
-                           body1 ...))))
+       (lambda (var1 rest)
+         (really-let-optionals* rest (etc ...) body1 ...))))
 
     ;; Single rest arg -- bind to the remaining rest values.
-    ((really-let-optionals* args (rest) body1 ...)
+    ((_ args (rest) body1 ...)
      (let ((rest args)) body1 ...))
 
     ;; No more vars. Make sure there are no unaccounted-for values, and
     ;; do the body.
-    ((really-let-optionals* args () body1 ...)
+    ((_ args () body1 ...)
      (if (null? args) (begin body1 ...)
          (error "Too many optional arguments." args)))))
 
 (define-syntax let-optionals*
-  (syntax-rules ()
-    ((let-optionals* args vars&defaults body1 ...)
+  (syntax-rules (rest)
+    ((_ args vars&defaults body1 ...)
      (let ((rest args))
        (really-let-optionals* rest vars&defaults body1 ...)))))
