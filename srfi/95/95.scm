@@ -22,13 +22,6 @@
 ;;;     (not (less? (list-ref list i) (list-ref list (- i 1)))).
 ;@
 
-(export sort
-        sort!
-        merge!
-        merge
-        sorted?
-        identity)
-
 (define (identity x) x)
 
 (define (sorted? seq less? . opt-key)
