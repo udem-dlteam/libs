@@ -104,9 +104,6 @@
 ;;; - If REST-ARG has 1 element, return that element.
 ;;; - If REST-ARG has >1 element, error.
 
-(export :optional
-        let-optionals*)
-
 (define-syntax :optional
   (syntax-rules ()
     ((:optional rest default-exp)
