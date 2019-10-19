@@ -5,8 +5,6 @@
 
 ;; These are just the 2 macro definitions missing in Gambit
 
-(export guard)
-
 (define-syntax guard
   (syntax-rules ()
     ((guard (var clause ...) e1 e2 ...)
