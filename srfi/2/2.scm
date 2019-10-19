@@ -136,8 +136,6 @@
 ;;
 ;; Adapted to Blackhole for Gambit by Álvaro Castro-Castilla
 
-(export and-let*)
-
 (define-macro (and-let* claws . body)
   (let* ((new-vars '()) (result (cons 'and '())) (growth-point result))
 
