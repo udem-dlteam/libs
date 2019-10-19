@@ -18,7 +18,7 @@
 ;;; their values are needed.
 ;;;
 ;;; The top-level forms in this file are Scheme 48 module expressions.
-;;; I use the module system to help me break up the expander code for 
+;;; I use the module system to help me break up the expander code for
 ;;; LET-OPTIONALS into three procedures, which makes it easier to understand
 ;;; and test. But if you wanted to port this code to a module-less Scheme
 ;;; system, you'd probably have to inline the three procs into the actual
@@ -31,17 +31,17 @@
 ;;;              (let-optionals* :syntax)
 ;;;              (:optional       :syntax))
 ;;;
-;;; To repeat: This code is not simple Scheme code; it is module code. 
-;;; It must be loaded into the Scheme 48 ,config package, not the ,user 
-;;; package. 
+;;; To repeat: This code is not simple Scheme code; it is module code.
+;;; It must be loaded into the Scheme 48 ,config package, not the ,user
+;;; package.
 ;;;
-;;; The only non-R4RS dependencies in the macros are ERROR 
+;;; The only non-R4RS dependencies in the macros are ERROR
 ;;; and CALL-WITH-VALUES.
-;;; 
+;;;
 ;;; See below for details on each macro.
 ;;;     -Olin
 
-;;; (LET-OPTIONALS arg-list ((var1 default1) ...) 
+;;; (LET-OPTIONALS arg-list ((var1 default1) ...)
 ;;;   body
 ;;;   ...)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -63,7 +63,7 @@
 ;;;   style scope -- DEFAULT3 would see VAR1 and VAR2, etc. But this is
 ;;;   impossible to implement without side effects or redundant conditional
 ;;;   tests. If I drop this requirement, I can use the efficient expansion
-;;;   shown below. If you need LET* scope, use the less-efficient 
+;;;   shown below. If you need LET* scope, use the less-efficient
 ;;;   LET-OPTIONALS* form defined below.
 ;;;
 ;;; Example:
@@ -74,7 +74,7 @@
 ;;;     ...))
 ;;;
 ;;; expands to:
-;;; 
+;;;
 ;;; (let* ((body (lambda (port start end) ...))
 ;;;        (end-def (lambda (%port %start) (body %port %start <end-default>)))
 ;;;        (start-def (lambda (%port) (end-def %port <start-default>)))
@@ -97,7 +97,7 @@
 ;;; This form is for evaluating optional arguments and their defaults
 ;;; in simple procedures that take a *single* optional argument. It is
 ;;; a macro so that the default will not be computed unless it is needed.
-;;; 
+;;;
 ;;; REST-ARG is a rest list from a lambda -- e.g., R in
 ;;;     (lambda (a b . r) ...)
 ;;; - If REST-ARG has 0 elements, evaluate DEFAULT-EXP and return that.
@@ -122,7 +122,7 @@
 ;;; are evaluated in a LET*-style environment. That is, DEFAULT3 is evaluated
 ;;; within the scope of VAR1 and VAR2, and so forth.
 ;;;
-;;; - If the last form in the ((var1 default1) ...) list is not a 
+;;; - If the last form in the ((var1 default1) ...) list is not a
 ;;;   (VARi DEFAULTi) pair, but a simple variable REST, then it is
 ;;;   bound to any left-over values. For example, if we have VAR1 through
 ;;;   VAR7, and ARGS has 9 values, then REST will be bound to the list of
@@ -162,4 +162,3 @@
     ((let-optionals* args vars&defaults body1 ...)
      (let ((rest args))
        (really-let-optionals* rest vars&defaults body1 ...)))))
-
