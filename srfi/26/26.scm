@@ -33,8 +33,6 @@
 ;;
 ;; Adapted to Blackhole for Gambit by Álvaro Castro-Castilla
 
-(export cut cute)
-
 ; (srfi-26-internal-cut slot-names combination . se)
 ;   transformer used internally
 ;     slot-names  : the internal names of the slots
