@@ -1,5 +1,5 @@
 (define-library (srfi 175)
-  (import (scheme base))
+  (import (gambit))
   (export ascii-codepoint?
           ascii-bytevector?
 
