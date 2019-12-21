@@ -6,8 +6,8 @@
 
 (define (base-offset-limit x base offset limit)
   (let ((cc (ensure-int x)))
-    (and (>= cc base) (< cc (+ base limit))
-         (+ offset (- cc base)))))
+    (and (fx>= cc base) (fx< cc (fx+ base limit))
+         (fx+ offset (fx- cc base)))))
 
 (define (char->int->char map-int char)
   (let ((int (map-int (char->integer char))))
@@ -16,16 +16,16 @@
 ;;
 
 (define (ascii-codepoint? x)
-  (and (integer? x) (exact? x) (<= 0 x #x7f)))
+  (and (fixnum? x) (fx<= 0 x #x7f)))
 
 (define (ascii-char? x)
-  (and (char? x) (< (char->integer x) #x80)))
+  (and (char? x) (fx< (char->integer x) #x80)))
 
 (define (ascii-bytevector? x)
   (and (bytevector? x)
-       (let check ((i (- (bytevector-length x) 1)))
-         (or (< i 0) (and (< (bytevector-u8-ref x i) #x80)
-                          (check (- i 1)))))))
+       (let check ((i (fx- (bytevector-length x) 1)))
+         (or (fx< i 0) (and (fx< (bytevector-u8-ref x i) #x80)
+                            (check (fx- i 1)))))))
 
 (define (ascii-string? x)
   (and (string? x)
@@ -35,21 +35,21 @@
           (let check ()
             (let ((char (read-char in)))
               (or (eof-object? char)
-                  (and (< (char->integer char) #x80) (check)))))))))
+                  (and (fx< (char->integer char) #x80) (check)))))))))
 
 (define (ascii-control? x)
   (let ((cc (ensure-int x)))
-    (or (<= 0 cc #x1f) (= cc #x7f))))
+    (or (fx<= 0 cc #x1f) (fx= cc #x7f))))
 
 (define (ascii-non-control? x)
   (let ((cc (ensure-int x)))
-    (<= #x20 cc #x7e)))
+    (fx<= #x20 cc #x7e)))
 
 (define (ascii-whitespace? x)
   (let ((cc (ensure-int x)))
-    (cond ((< cc #x09) #f)
-          ((< cc #x0e) #t)
-          (else (= cc #x20)))))
+    (cond ((fx< cc #x09) #f)
+          ((fx< cc #x0e) #t)
+          (else (fx= cc #x20)))))
 
 (define (ascii-space-or-tab? x)
   (let ((cc (ensure-int x)))
@@ -57,29 +57,29 @@
 
 (define (ascii-other-graphic? x)
   (let ((cc (ensure-int x)))
-    (or (<= #x21 cc #x2f)
-        (<= #x3a cc #x40)
-        (<= #x5b cc #x60)
-        (<= #x7b cc #x7e))))
+    (or (fx<= #x21 cc #x2f)
+        (fx<= #x3a cc #x40)
+        (fx<= #x5b cc #x60)
+        (fx<= #x7b cc #x7e))))
 
 (define (ascii-upper-case? x)
   (let ((cc (ensure-int x)))
-    (<= #x41 cc #x5a)))
+    (fx<= #x41 cc #x5a)))
 
 (define (ascii-lower-case? x)
   (let ((cc (ensure-int x)))
-    (<= #x61 cc #x7a)))
+    (fx<= #x61 cc #x7a)))
 
 (define (ascii-alphabetic? x)
   (let ((cc (ensure-int x)))
-    (or (<= #x41 cc #x5a)
-        (<= #x61 cc #x7a))))
+    (or (fx<= #x41 cc #x5a)
+        (fx<= #x61 cc #x7a))))
 
 (define (ascii-alphanumeric? x)
   (let ((cc (ensure-int x)))
-    (or (<= #x30 cc #x39)
-        (<= #x41 cc #x5a)
-        (<= #x61 cc #x7a))))
+    (or (fx<= #x30 cc #x39)
+        (fx<= #x41 cc #x5a)
+        (fx<= #x61 cc #x7a))))
 
 (define (ascii-numeric? x radix)
   (not (not (ascii-digit-value x radix))))
@@ -96,13 +96,13 @@
   (base-offset-limit x #x61 offset (min limit 26)))
 
 (define (ascii-nth-digit n)
-  (and (<= 0 n 9) (integer->char (+ #x30 n))))
+  (and (fx<= 0 n 9) (integer->char (fx+ #x30 n))))
 
 (define (ascii-nth-upper-case n)
-  (integer->char (+ #x41 (modulo n 26))))
+  (integer->char (fx+ #x41 (fxmodulo n 26))))
 
 (define (ascii-nth-lower-case n)
-  (integer->char (+ #x61 (modulo n 26))))
+  (integer->char (fx+ #x61 (fxmodulo n 26))))
 
 (define (ascii-upcase x)
   (if (char? x)
@@ -117,17 +117,17 @@
 (define (ascii-control->graphic x)
   (if (char? x)
       (char->int->char ascii-control->graphic x)
-      (or (and (<= 0 x #x1f) (+ x #x40))
-          (and (= x #x7f) #x3f))))
+      (or (and (fx<= 0 x #x1f) (fx+ x #x40))
+          (and (fx= x #x7f) #x3f))))
 
 (define (ascii-graphic->control x)
   (if (char? x)
       (char->int->char ascii-graphic->control x)
-      (or (and (<= #x40 x #x5f) (- x #x40))
-          (and (= x #x3f) #x7f))))
+      (or (and (fx<= #x40 x #x5f) (fx- x #x40))
+          (and (fx= x #x3f) #x7f))))
 
 (define (ascii-mirror-bracket char)
-  (if (integer? char)
+  (if (fixnum? char)
       (let ((char (ascii-mirror-bracket (integer->char char))))
         (and char (char->integer char)))
       (case char
@@ -144,26 +144,26 @@
 (define (ascii-ci-cmp char1 char2)
   (let ((cc1 (ensure-int char1))
         (cc2 (ensure-int char2)))
-    (when (<= #x41 cc1 #x5a) (set! cc1 (+ cc1 #x20)))
-    (when (<= #x41 cc2 #x5a) (set! cc2 (+ cc2 #x20)))
-    (cond ((< cc1 cc2) -1)
-          ((> cc1 cc2) 1)
+    (when (fx<= #x41 cc1 #x5a) (set! cc1 (fx+ cc1 #x20)))
+    (when (fx<= #x41 cc2 #x5a) (set! cc2 (fx+ cc2 #x20)))
+    (cond ((fx< cc1 cc2) -1)
+          ((fx> cc1 cc2) 1)
           (else 0))))
 
 (define (ascii-ci=? char1 char2)
-  (= (ascii-ci-cmp char1 char2) 0))
+  (fx= (ascii-ci-cmp char1 char2) 0))
 
 (define (ascii-ci<? char1 char2)
-  (< (ascii-ci-cmp char1 char2) 0))
+  (fx< (ascii-ci-cmp char1 char2) 0))
 
 (define (ascii-ci>? char1 char2)
-  (> (ascii-ci-cmp char1 char2) 0))
+  (fx> (ascii-ci-cmp char1 char2) 0))
 
 (define (ascii-ci<=? char1 char2)
-  (<= (ascii-ci-cmp char1 char2) 0))
+  (fx<= (ascii-ci-cmp char1 char2) 0))
 
 (define (ascii-ci>=? char1 char2)
-  (>= (ascii-ci-cmp char1 char2) 0))
+  (fx>= (ascii-ci-cmp char1 char2) 0))
 
 (define (ascii-string-ci-cmp string1 string2)
   (call-with-port
@@ -179,23 +179,23 @@
                   ((eof-object? char2) 1)
                   (else (let ((cc1 (char->integer char1))
                               (cc2 (char->integer char2)))
-                          (when (<= #x41 cc1 #x5a) (set! cc1 (+ cc1 #x20)))
-                          (when (<= #x41 cc2 #x5a) (set! cc2 (+ cc2 #x20)))
-                          (cond ((< cc1 cc2) -1)
-                                ((> cc1 cc2) 1)
+                          (when (fx<= #x41 cc1 #x5a) (set! cc1 (fx+ cc1 #x20)))
+                          (when (fx<= #x41 cc2 #x5a) (set! cc2 (fx+ cc2 #x20)))
+                          (cond ((fx< cc1 cc2) -1)
+                                ((fx> cc1 cc2) 1)
                                 (else (loop)))))))))))))
 
 (define (ascii-string-ci=? string1 string2)
-  (= (ascii-string-ci-cmp string1 string2) 0))
+  (fx= (ascii-string-ci-cmp string1 string2) 0))
 
 (define (ascii-string-ci<? string1 string2)
-  (< (ascii-string-ci-cmp string1 string2) 0))
+  (fx< (ascii-string-ci-cmp string1 string2) 0))
 
 (define (ascii-string-ci>? string1 string2)
-  (> (ascii-string-ci-cmp string1 string2) 0))
+  (fx> (ascii-string-ci-cmp string1 string2) 0))
 
 (define (ascii-string-ci<=? string1 string2)
-  (<= (ascii-string-ci-cmp string1 string2) 0))
+  (fx<= (ascii-string-ci-cmp string1 string2) 0))
 
 (define (ascii-string-ci>=? string1 string2)
-  (>= (ascii-string-ci-cmp string1 string2) 0))
+  (fx>= (ascii-string-ci-cmp string1 string2) 0))
