@@ -1,19 +1,10 @@
 ;; Copyright 2019 Lassi Kortela
 ;; SPDX-License-Identifier: MIT
 
-(import (scheme base) (scheme file) (scheme read) (scheme write) (srfi 175))
+(import (srfi 175))
+(import (_test))
 
-(define-syntax want
-  (syntax-rules ()
-    ((_ right-answer (proc args ...))
-     (unless (equal? right-answer (proc args ...))
-       (display "Failed: wanted ")
-       (write right-answer)
-       (display " but got ")
-       (write (proc args ...))
-       (display " from ")
-       (display '(proc args ...))
-       (newline)))))
+(define-syntax want (syntax-rules () ((_ x y) (check-equal? x y))))
 
 (want #f (ascii-codepoint? -1))
 (want #t (ascii-codepoint? 0))
