@@ -7,9 +7,9 @@
 
 ;;;============================================================================
 
-;;; SRFI 43, Vector library.
+;;; SRFI 133, Vector library.
 
-(import (srfi 43))
+(import (srfi 133))
 (import (_test))
 
 ;;;============================================================================
@@ -73,7 +73,7 @@
       wrong-number-of-arguments-exception?
         (lambda () (vector-unfold (lambda (x1 x2 x3) (values 1 2 3))
                                   1 2 )))
-    (check-tail-exn
+    (check-exn
       type-exception?
       (lambda () (vector-unfold 0 1 2)))
 
@@ -111,7 +111,7 @@
         (lambda () (vector-unfold-right (lambda (x1 x2 x3) (values 1 2 3))
                                   1 2 )))
 
-    (check-tail-exn
+    (check-exn
       type-exception?
         (lambda () (vector-unfold 0 1 2)))
 
@@ -182,11 +182,36 @@
 ;;; vector-append
 
     ;;; primitive R5Rs ##vector-append
-
+        (check-equal? (vector-append #(0) #(1))
+                      #(0 1))
 ;;;----------------------------------------------------------------------------
 ;;; vector-concatenate
 
     ;;; primitive ##append-vectors
+
+;;;----------------------------------------------------------------------------
+;;; vector-append-subvectors
+
+(let ((vec1 #(0 1 2 3))
+      (vec2 #(4 5 6 7)))
+  (check-equal?
+    (vector-append-subvectors vec1 0 1 vec2 2 4)
+    #(0 6 7))
+  (check-equal? vec1 #(0 1 2 3))
+  (check-equal? vec2 #(4 5 6 7)))
+    
+(check-exn
+  wrong-number-of-arguments-exception?
+    (lambda () (vector-append-subvectors 0 1)))
+
+(check-exn
+  wrong-number-of-arguments-exception?
+    (lambda () (vector-append-subvectors #(0) 1 2 3)))
+
+(check-exn
+  type-exception?
+    (lambda () (vector-append-subvectors 0 1 2)))
+
 
 ;;;============================================================================
 ;;; Predicates
@@ -219,6 +244,9 @@
 ;;;----------------------------------------------------------------------------
 ;;; vector=
 
+
+    (check-true (vector= equal?))
+    (check-true (vector= equal? #()))
     (check-true (vector= equal? #() #()))
 
     (let ((vec #()))
@@ -228,11 +256,7 @@
 
     (check-tail-exn
       wrong-number-of-arguments-exception?
-        (lambda () (vector= 0 1)))
-
-    (check-tail-exn
-      wrong-number-of-arguments-exception?
-        (lambda () (vector= 0 1 2 3)))
+        (lambda () (vector=)))
 
     (check-tail-exn
       type-exception?
@@ -242,7 +266,7 @@
       type-exception?
         (lambda () (vector= eq? 0 #())))
 
-    (check-tail-exn
+    (check-exn
       type-exception?
         (lambda () (vector= eq? #() 0)))
 
@@ -271,7 +295,7 @@
 
     (let ((vec #(0 1 2 3)))
       (check-equal?
-        (vector-fold (lambda (index tail elt) (cons elt tail))
+        (vector-fold (lambda (tail elt) (cons elt tail))
                      '() vec) 
         '(3 2 1 0))
       (check-equal?
@@ -294,13 +318,12 @@
       type-exception?
         (lambda () (vector-fold (lambda (x1 x2) '()) 1 #() 0)))
 
-
 ;;;----------------------------------------------------------------------------
 ;;; vector-fold-right
 
 
     (check-equal?
-      (vector-fold-right (lambda (index tail elt) (cons elt tail))
+      (vector-fold-right (lambda (tail elt) (cons elt tail))
                                  '() #(0 1 2 3))
       '(0 1 2 3))
 
@@ -320,24 +343,17 @@
       type-exception?
         (lambda () (vector-fold-right (lambda (x1 x2) '()) 1 #() 0)))
      
+
 ;;;----------------------------------------------------------------------------
 ;;; vector-map
 
     (let ((vec #(0 1 2 3 4)))
       (check-equal?
-        (vector-map (lambda (i x) (* x x)) vec)
+        (vector-map (lambda (x) (* x x)) vec)
         #(0 1 4 9 16))
       (check-equal?
         vec
         #(0 1 2 3 4)))
-
-    (let ((vec #(1 2 3 4 5)))
-      (check-equal?
-        (vector-map (lambda (i x) (- x i)) vec )
-        #(1 1 1 1 1))
-      (check-equal?
-        vec
-        #(1 2 3 4 5)))
 
     (check-tail-exn
       wrong-number-of-arguments-exception?
@@ -360,12 +376,8 @@
 ;;; vector-map!
 
     (check-equal?
-      (vector-map (lambda (i x) (* x x)) #(0 1 2 3 4))
+      (vector-map (lambda (x) (* x x)) #(0 1 2 3 4))
       #(0 1 4 9 16))
-
-    (check-equal?
-      (vector-map (lambda (i x) (- x i)) #(1 2 3 4 5) )
-      #(1 1 1 1 1))
 
     (check-tail-exn
       wrong-number-of-arguments-exception?
@@ -388,7 +400,7 @@
 ;;; vector-for-each
 
     (let ((vec #(0 1 2 3)))
-        (vector-for-each (lambda (i x) (vector-set! vec i (* x x)))
+        (vector-for-each (lambda (x) (vector-set! vec x (* x x)))
                          vec)
         (check-equal? vec
            #(0 1 4 9)))
@@ -413,11 +425,11 @@
 ;;; vector-count
 
     (check-equal? 
-      (vector-count (lambda (i elt) (even? elt)) #(1 2 3 4))
+      (vector-count (lambda (elt) (even? elt)) #(1 2 3 4))
       2)
 
     (check-equal?
-      (vector-count (lambda (i x y) (< x y)) '#(0 1 2 3 4) '#(1 2 3 4 4 4))
+      (vector-count (lambda (x y) (< x y)) '#(0 1 2 3 4) '#(1 2 3 4 4 4))
       4)
 
     (check-tail-exn
@@ -437,6 +449,29 @@
       type-exception?
         (lambda () (vector-count (lambda () '()) #() 0)))
 
+
+;;;----------------------------------------------------------------------------
+;;; vector-cumulate
+
+   (check-equal?
+     (vector-cumulate + 0 #(1 1 1 1 1 1)) 
+     #(1 2 3 4 5 6))
+
+   (check-tail-exn
+     wrong-number-of-arguments-exception?
+       (lambda () (vector-cumulate 0 1)))
+
+   (check-tail-exn
+     wrong-number-of-arguments-exception?
+       (lambda () (vector-cumulate 0 1 2 3)))
+
+    (check-tail-exn
+      type-exception?
+        (lambda () (vector-cumulate 0 0 #())))
+
+    (check-tail-exn
+      type-exception?
+        (lambda () (vector-cumulate + 0 0)))
 
 ;;;============================================================================
 ;;; Searching
@@ -629,6 +664,32 @@
       type-exception? 
         (lambda () (vector-every (lambda () '()) #() 0)))
 
+
+;;;----------------------------------------------------------------------------
+;;; vector-partition 
+
+    (let-values (((new-vec mid) (vector-partition (lambda (x) (< x 3)) 
+                                                #(0 3 1 4 2 5))))
+      (check-equal? new-vec #(0 1 2 3 4 5))
+      (check-equal? mid 3))
+
+    (check-tail-exn
+      wrong-number-of-arguments-exception?
+        (lambda () (vector-partition 0)))
+
+    (check-tail-exn
+      wrong-number-of-arguments-exception?
+        (lambda () (vector-partition 0 1 2)))
+
+    (check-tail-exn
+      type-exception?
+        (lambda () (vector-partition 0 #())))
+
+    (check-tail-exn
+      type-exception?
+        (lambda () (vector-partition (lambda () '()) 0)))
+        
+
 ;;;============================================================================
 ;;; Mutators
 ;;;============================================================================
@@ -778,6 +839,49 @@
       type-exception?
         (lambda () (vector-reverse-copy! #() 1 0)))
 
+;;;----------------------------------------------------------------------------
+;;; vector-unfold!
+
+
+   
+    (let ((vec #(0 0 0 0 0)))
+        (vector-unfold! (lambda (i) (* i i)) vec 1 4)
+        (check-equal? vec #(0 1 4 9 0)))
+ 
+    (check-tail-exn
+      wrong-number-of-arguments-exception?
+        (lambda () (vector-unfold! 0 1 2)))
+
+    (check-tail-exn
+      type-exception?
+        (lambda () (vector-unfold! 0 #() 0 1)))
+
+    (check-tail-exn
+      type-exception?
+        (lambda () (vector-unfold! (lambda () '()) 0 0 1)))
+
+;;;----------------------------------------------------------------------------
+;;; vector-unfold-right!   
+
+    (let ((vec1 #(0 0 0 0 0))
+          (vec2 #()))
+        (vector-unfold-right! (lambda (i) (* i i)) vec1 1 4)
+        (check-equal? vec1 #(0 1 4 9 0)))
+        
+    
+    (check-tail-exn
+      wrong-number-of-arguments-exception?
+        (lambda () (vector-unfold-right! 0 1 2)))
+
+    (check-tail-exn
+      type-exception?
+        (lambda () (vector-unfold-right! 0 #() 0 1)))
+
+    (check-tail-exn
+      type-exception?
+        (lambda () (vector-unfold-right! (lambda () '()) 0 0 1)))
+
+
 
 ;;;============================================================================
 ;;; Conversion
@@ -850,5 +954,53 @@
     (check-tail-exn
       wrong-number-of-arguments-exception?
         (lambda () (reverse-list->vector 0 1 2 3)))
+
+;;;----------------------------------------------------------------------------
+;;; string->vector  ;;; R7Rs primitive unimplemented in Gambit
+
+    (check-equal? (string->vector "abc") #(#\a #\b #\c))
+
+    (check-tail-exn
+      wrong-number-of-arguments-exception?
+        (lambda () (string->vector)))
+
+    (check-tail-exn
+      wrong-number-of-arguments-exception?
+        (lambda () (string->vector 0 1 2 3)))
+
+    (check-tail-exn
+      type-exception?
+        (lambda () (string->vector 0)))
+
+
+;;;----------------------------------------------------------------------------
+;;; vector->string  ;;; R7Rs primitive unimplemented in Gambit
+
+    (check-equal? (vector->string (vector #\a #\b #\c))
+            "abc")
+
+    (check-equal? (vector->string #(#\a #\b #\c) 1 2)
+            "b")
+
+    (check-tail-exn
+        wrong-number-of-arguments-exception?
+            (lambda () (vector->string)))
+
+    (check-tail-exn
+        wrong-number-of-arguments-exception?
+            (lambda () (vector->string 0 1 2 3)))
+
+
+    (check-tail-exn
+        type-exception?
+          (lambda () (vector->string 0)))
+
+    (check-tail-exn
+        type-exception?
+          (lambda () (vector->string #(0 1 2))))
+
+    (check-tail-exn
+        type-exception?
+          (lambda () (vector->string #(#\a #\b 0))))
 
 ;;;============================================================================
