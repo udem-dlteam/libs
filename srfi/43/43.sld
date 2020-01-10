@@ -56,6 +56,6 @@
     reverse-list->vector
     )
 
-;    (import (gambit))
+    (import (gambit))
     (include "43.scm")
 )

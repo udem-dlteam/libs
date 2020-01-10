@@ -37,7 +37,6 @@
               0
               (function-name vec . rest)
               function-def)))))
-
 (define-syntax with-proc-check
     (syntax-rules ()
       ((with-proc-check (function-name proc . rest) function-def)
@@ -48,6 +47,16 @@
               (function-name proc . rest)
               function-def)))))
             
+(define-syntax with-proc-vector-check
+    (syntax-rules ()
+      ((with-proc-vector-check (function-name proc vec . rest) function-def)
+       (with-proc-check(function-name proc vec . rest)
+         (macro-check-vector
+           vec
+           1
+           (function-name proc vec . rest)
+           function-def)))))
+
 (define-syntax define-vector-check
   (syntax-rules ()
     ((define-vector-check (function-name vec . rest) function-def)
@@ -318,9 +327,8 @@
              (- send 1)
              tstart))))))
 
-(define-proc-vector-check 
-    (vector-unfold! f vec start end . initial-seeds)
-        (letrec ((tabulate!                   ; Special zero-seed case.
+(define vector-unfold!
+        (letrec ((tabulate!        ; Special zero-seed case.
                     (lambda (f vec i len)
                             (cond ((< i len)
                                     (vector-set! vec i (f i))
@@ -339,44 +347,45 @@
                                      (apply f i seeds)
                                      (vector-set! vec i elt)
                             (unfold2+! f vec (+ i 1) len new-seeds))))))
-                  (if (< (vector-length vec) start)
-                      #!void
-                      (cond ((null? initial-seeds)
-                              (tabulate! f vec start end))
-                            ((null? (cdr initial-seeds))
-                              (unfold1! f vec start end (car initial-seeds)))
-                            (else
-                              (unfold2+! f vec start end initial-seeds))))))
+        (lambda (f vec start end . initial-seeds)
+          (with-proc-vector-check (vector-unfold! f vec start end . initial-seeds)
+            (if (< (vector-length vec) start)
+                   (void)
+                   (cond ((null? initial-seeds)
+                          (tabulate! f vec start end))
+                         ((null? (cdr initial-seeds))
+                          (unfold1! f vec start end (car initial-seeds)))
+                         (else
+                          (unfold2+! f vec start end initial-seeds))))))))
 
-(define-proc-vector-check
-  (vector-unfold-right! f vec start end . initial-seeds)
-      (letrec ((tabulate!
-                   (lambda (f vec i)
-                     (cond ((>= i start)
-                             (vector-set! vec i (f i))
-                             (tabulate! f vec (- i 1))))))
-               (unfold1!
-                    (lambda (f vec i seed)
-                        (if (>= i start)
-                            (receive (elt new-seed)
-                                     (f i seed)
-                                     (vector-set! vec i elt)
-                                     (unfold1! f vec (- i 1) new-seed)))))
-               (unfold2+!
-                   (lambda (f vec i seeds)
-                       (if (>= i start)
-                           (receive (elt . new-seeds)
-                                    (apply f i seeds)
-                                    (vector-set! vec i elt)
-                                    (unfold2+! f vec (- i 1) new-seeds))))))
+(define (vector-unfold-right! f vec start end . initial-seeds)
+  (letrec ((tabulate!
+               (lambda (f vec i)
+                 (cond ((>= i start)
+                         (vector-set! vec i (f i))
+                         (tabulate! f vec (- i 1))))))
+           (unfold1!
+                (lambda (f vec i seed)
+                    (if (>= i start)
+                        (receive (elt new-seed)
+                                 (f i seed)
+                                 (vector-set! vec i elt)
+                                 (unfold1! f vec (- i 1) new-seed)))))
+           (unfold2+!
+               (lambda (f vec i seeds)
+                   (if (>= i start)
+                       (receive (elt . new-seeds)
+                                (apply f i seeds)
+                                (vector-set! vec i elt)
+                                (unfold2+! f vec (- i 1) new-seeds))))))
+      (with-proc-vector-check (vector-unfold-right! f vec start end initial-seeds)
           (let ((i (- end 1)))
             (cond ((null? initial-seeds)
                     (tabulate! f vec i))
                   ((null? (cdr initial-seeds))
                     (unfold1!  f vec i (car initial-seeds)))
                   (else
-                    (unfold2+! f vec i initial-seeds))))))
-
+                    (unfold2+! f vec i initial-seeds)))))))
 
 
 ;;;============================================================================
@@ -396,7 +405,7 @@
                                               vector-fold)
                             (cons vec vectors)))))
 
-(define-proc-check (vector-fold-right kons knil vec . vectors)
+(define vector-fold-right
   (letrec ((loop1 (lambda (kons knil vec i)
                     (if (negative? i)
                         knil
@@ -411,6 +420,8 @@
                                         (vectors-ref vectors i))
                                  vectors
                                  (- i 1))))))
+  (lambda (kons knil vec . vectors)
+    (with-proc-check (vector-fold-right kons knil vec . vectors)
     (macro-check-vector
       vec
       2
@@ -421,7 +432,7 @@
                   (- (%smallest-length vectors
                                        (vector-length vec)
                                        vector-fold-right)
-                     1))))))
+                     1))))))))
 
 (define-proc-vector-check
    (vector-map f vec . vectors)  ;;; R7Rs #unimplemented in Gambit
@@ -453,9 +464,8 @@
                                                   vector-map!))))
 
 
-(define-proc-vector-check
-   (vector-for-each f vec . vectors )  ;;; R7Rs #unimplemented in Gambit
-      (letrec ((for-each1
+(define vector-for-each
+      (letrec ((for-each1   ;;; R7Rs #unimplemented in Gambit
                  (lambda (f vec i len)
                    (cond ((< i len)
                            (f (vector-ref vec i))
@@ -465,12 +475,14 @@
                    (cond ((< i len)
                            (apply f (vectors-ref vecs i))
                            (for-each2+ f vecs (+ i 1) len))))))
+    (lambda (f vec . vectors)
+      (with-proc-vector-check (vector-for-each f vec . vectors) 
             (if (null? vectors)
                 (for-each1 f vec 0 (vector-length vec))
                 (for-each2+ f (cons vec vectors) 0
                             (%smallest-length vectors
                                               (vector-length vec)
-                                              vector-for-each)))))
+                                              vector-for-each)))))))
 
 
 (define-proc-vector-check (vector-count pred? vec . vectors)
@@ -514,65 +526,26 @@
 
 (define-proc-vector-check
    (vector-index pred? vec . vectors)
-    (vector-index/skip pred? vec vectors vector-index))
+    (%vector-index/skip pred? vec vectors vector-index))
 
 
 (define-proc-vector-check
    (vector-skip pred? vec . vectors)
-     (vector-index/skip (lambda elts (not (apply pred? elts)))
+     (%vector-index/skip (lambda elts (not (apply pred? elts)))
                         vec vectors
                         vector-skip))
-
-
-(define vector-index/skip
-(letrec ((loop1  (lambda (pred? vec len i)
-                   (cond ((= i len) #f)
-                         ((pred? (vector-ref vec i)) i)
-                         (else (loop1 pred? vec len (+ i 1))))))
-         (loop2+ (lambda (pred? vectors len i)
-                   (cond ((= i len) #f)
-                         ((apply pred? (vectors-ref vectors i)) i)
-                         (else (loop2+ pred? vectors len
-                                       (+ i 1)))))))
-    (lambda (pred? vec vectors callee)
-        (if (null? vectors)
-            (loop1 pred? vec (vector-length vec) 0)
-            (loop2+ pred? (cons vec vectors)
-                    (%smallest-length vectors
-                                      (vector-length vec)
-                                      callee)
-                    0)))))
-
-
 (define-proc-vector-check
   (vector-index-right pred? vec . vectors)
-    (vector-index/skip-right pred? vec vectors vector-index-right))
+    (%vector-index/skip-right pred? vec vectors vector-index-right))
 
 
 (define-proc-vector-check
    (vector-skip-right pred? vec . vectors)
-     (vector-index/skip-right (lambda elts (not (apply pred? elts)))
+     (%vector-index/skip-right (lambda elts (not (apply pred? elts)))
                               vec vectors
                               vector-index-right))
 
 
-(define vector-index/skip-right
-  (letrec ((loop1  (lambda (pred? vec i)
-                     (cond ((negative? i) #f)
-                           ((pred? (vector-ref vec i)) i)
-                           (else (loop1 pred? vec (- i 1))))))
-           (loop2+ (lambda (pred? vectors i)
-                     (cond ((negative? i) #f)
-                           ((apply pred? (vectors-ref vectors i)) i)
-                           (else (loop2+ pred? vectors (- i 1)))))))
-    (lambda (pred? vec vectors callee)
-        (if (null? vectors)
-            (loop1 pred? vec (- (vector-length vec) 1))
-            (loop2+ pred? (cons vec vectors)
-                    (- (%smallest-length vectors
-                                         (vector-length vec)
-                                         callee)
-                        1))))))
 
 
 (define (vector-binary-search vec value cmp 
@@ -596,8 +569,7 @@
                         (else                   (loop i end i)))))))))))
 
 
-(define-proc-vector-check
-  (vector-any pred? vec . vectors)
+(define vector-any
     (letrec ((loop1 (lambda (pred? vec i len len-1)
                     (and (not (= i len))
                          (if (= i len-1)
@@ -612,17 +584,18 @@
                               (or (apply pred? (vectors-ref vectors i))
                                   (loop2+ pred? vectors (+ i 1)
                                   len len-1)))))))
+    (lambda (pred? vec . vectors)
+      (with-proc-vector-check (vector-any pred? vec . vectors)
         (if (null? vectors)
             (let ((len (vector-length vec)))
               (loop1 pred? vec 0 len (- len 1)))
             (let ((len (%smallest-length vectors
                                          (vector-length vec)
                                          vector-any)))
-              (loop2+ pred? (cons vec vectors) 0 len (- len 1))))))
+              (loop2+ pred? (cons vec vectors) 0 len (- len 1))))))))
 
 
-(define-proc-vector-check
-  (vector-every pred? vec . vectors)
+(define vector-every
   (letrec ((loop1 (lambda (pred? vec i len len-1)
                     (or (not (= i len))
                          (if (= i len-1)
@@ -637,13 +610,15 @@
                               (and (apply pred? (vectors-ref vectors i))
                                   (loop2+ pred? vectors (+ i 1)
                                           len len-1)))))))
+  (lambda (pred? vec . vectors)
+    (with-proc-vector-check (vector-every pred? vec . vectors)
         (if (null? vectors)
             (let ((len (vector-length vec)))
               (loop1 pred? vec 0 len (- len 1)))
             (let ((len (%smallest-length vectors
                                          (vector-length vec)
                                          vector-every)))
-              (loop2+ pred? (cons vec vectors) 0 len (- len 1))))))
+              (loop2+ pred? (cons vec vectors) 0 len (- len 1))))))))
 
 (define-proc-vector-check
   (vector-partition pred? vec)
@@ -826,5 +801,47 @@
             (loop/l->r target source send sstart tstart)
             (loop/r->l target source sstart (- send 1)
                                  (+ -1 tstart send (- sstart)))))))
+
+
+
+(define %vector-index/skip
+(letrec ((loop1  (lambda (pred? vec len i)
+                   (cond ((= i len) #f)
+                         ((pred? (vector-ref vec i)) i)
+                         (else (loop1 pred? vec len (+ i 1))))))
+         (loop2+ (lambda (pred? vectors len i)
+                   (cond ((= i len) #f)
+                         ((apply pred? (vectors-ref vectors i)) i)
+                         (else (loop2+ pred? vectors len
+                                       (+ i 1)))))))
+    (lambda (pred? vec vectors callee)
+        (if (null? vectors)
+            (loop1 pred? vec (vector-length vec) 0)
+            (loop2+ pred? (cons vec vectors)
+                    (%smallest-length vectors
+                                      (vector-length vec)
+                                      callee)
+                    0)))))
+
+
+
+
+(define %vector-index/skip-right
+  (letrec ((loop1  (lambda (pred? vec i)
+                     (cond ((negative? i) #f)
+                           ((pred? (vector-ref vec i)) i)
+                           (else (loop1 pred? vec (- i 1))))))
+           (loop2+ (lambda (pred? vectors i)
+                     (cond ((negative? i) #f)
+                           ((apply pred? (vectors-ref vectors i)) i)
+                           (else (loop2+ pred? vectors (- i 1)))))))
+    (lambda (pred? vec vectors callee)
+        (if (null? vectors)
+            (loop1 pred? vec (- (vector-length vec) 1))
+            (loop2+ pred? (cons vec vectors)
+                    (- (%smallest-length vectors
+                                         (vector-length vec)
+                                         callee)
+                        1))))))
 
 ;;;============================================================================

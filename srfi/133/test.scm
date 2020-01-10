@@ -73,6 +73,7 @@
       wrong-number-of-arguments-exception?
         (lambda () (vector-unfold (lambda (x1 x2 x3) (values 1 2 3))
                                   1 2 )))
+
     (check-exn
       type-exception?
       (lambda () (vector-unfold 0 1 2)))
@@ -394,7 +395,6 @@
     (check-exn
       type-exception?
         (lambda () (vector-map (lambda (i x) '()) #() 0)))
-
 
 ;;;----------------------------------------------------------------------------
 ;;; vector-for-each
