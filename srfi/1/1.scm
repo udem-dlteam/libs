@@ -263,12 +263,12 @@
 ;;cj:
 (define (make-list len #!optional elt)
   (if (##fixnum? len)
-      ;;and (##fixnum.>= len 0) ? seems like the standard doesn't
+      ;;and (##fx>= len 0) ? seems like the standard doesn't
       ;;prohibit negative lengths
       (let lp ((l '())
                (i len))
-        (if (##fixnum.> i 0)
-            (lp (##cons elt l) (##fixnum.- i 1))
+        (if (##fx> i 0)
+            (lp (##cons elt l) (##fx- i 1))
             l))
       (error "make-list: len is not a fixnum:" len)))
 
@@ -488,11 +488,11 @@
   (let lp ((x x) (lag x) (len 0))
     (if (##pair? x)
         (let ((x (##cdr x))
-              (len (##fixnum.+ len 1)))
+              (len (##fx+ len 1)))
           (if (##pair? x)
               (let ((x   (##cdr x))
                     (lag (cdr lag))
-                    (len (##fixnum.+ len 1)))
+                    (len (##fx+ len 1)))
                 (and (not (eq? x lag))
                      (lp x lag len)))
               len))
@@ -557,52 +557,52 @@
 
 (define (take=recur lis k)
   ;;(check-arg integer? k take)
-  (if (and (##fixnum? k) (##fixnum.>= k 0))
+  (if (and (##fixnum? k) (##fx>= k 0))
       (let recur ((lis lis) (k k))
-        (if (##fixnum.zero? k) '()
+        (if (##fxzero? k) '()
             (if (##pair? lis)
                 (##cons (##car lis)
-                        (recur (##cdr lis) (##fixnum.- k 1)))
+                        (recur (##cdr lis) (##fx- k 1)))
                 (error "take: lis too short"))))
       (error "take: k is not a positive fixnum:" k)))
 ;;cj NOTE: uses recursion, thus overly stack, thus additional gc with large k.
 ;; the following is 2.35 times faster (measured with gambit4b14 on ppc) with k==100000, or still 1.15 times faster with k==10000 (where the call stack doesn't allocate heap space yet with take=recur).
 (define (take lis k)
-  (if (and (##fixnum? k) (##fixnum.>= k 0))
-      (if (##fixnum.= k 0)
+  (if (and (##fixnum? k) (##fx>= k 0))
+      (if (##fx= k 0)
           '()
           (or (and (pair? lis)
                    (let ((res (cons (##car lis) '())))
                      (let iter ((res-tail res)
                                 (lis (##cdr lis))
-                                (k (##fixnum.- k 1)))
-                       (if (##fixnum.zero? k) res
+                                (k (##fx- k 1)))
+                       (if (##fxzero? k) res
                            (and (##pair? lis)
                                 (let ((res-next (##cons (##car lis) '())))
                                   (##set-cdr! res-tail res-next)
                                   (iter res-next
                                         (##cdr lis)
-                                        (##fixnum.- k 1))))))))
+                                        (##fx- k 1))))))))
               (error "take: lis too short")))
       (error "take: k is not a positive fixnum:" k)))
 
 (define (drop lis k)
   ;;(check-arg integer? k drop)
-  (if (and (##fixnum? k) (##fixnum.>= k 0))
+  (if (and (##fixnum? k) (##fx>= k 0))
       (let iter ((lis lis) (k k))
-        (if (##fixnum.zero? k) lis
+        (if (##fxzero? k) lis
             (if (##pair? lis)
                 (iter (##cdr lis)
-                      (##fixnum.- k 1))
+                      (##fx- k 1))
                 (error "drop: lis too short"))))
       (error "drop: k is not a positive fixnum:" k)))
 
 
 (define (take! lis k)
   ;;(check-arg integer? k take!)
-  (if (and (##fixnum? k) (##fixnum.>= k 0))
-      (if (##fixnum.zero? k) '()
-          (begin (set-cdr! (drop lis (##fixnum.- k 1)) '())
+  (if (and (##fixnum? k) (##fx>= k 0))
+      (if (##fxzero? k) '()
+          (begin (set-cdr! (drop lis (##fx- k 1)) '())
                  lis))
       (error "take!: k is not a positive fixnum:" k)))
 
