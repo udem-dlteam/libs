@@ -1,7 +1,14 @@
 (define-library (srfi 1)
 
+  ;; Also in RnRS:
   (export
-   xcons tree-copy make-list list-tabulate cons* list-copy
+   append assoc assq assv cadr car cdar cdr cons for-each
+   length list list-copy list-ref make-list map member memq memv
+   null? pair? reverse set-car! set-cdr!)
+
+  ;; Only in SRFI 1:
+  (export
+   xcons tree-copy list-tabulate cons*
    proper-list? circular-list? dotted-list? not-pair? null-list? list=
    circular-list length+
    iota
@@ -17,7 +24,7 @@
    append! append-reverse append-reverse! concatenate concatenate!
    unfold       fold       pair-fold       reduce
    unfold-right fold-right pair-fold-right reduce-right
-   map append-map append-map! map! pair-for-each filter-map map-in-order
+   append-map append-map! map! pair-for-each filter-map map-in-order
    filter  partition  remove
    filter! partition! remove!
    find find-tail any every list-index
@@ -33,5 +40,7 @@
    lset-xor  lset-diff+intersection
    lset-union! lset-intersection! lset-difference!
    lset-xor! lset-diff+intersection!)
+
+  (import (scheme base))
 
   (include "1.scm"))
